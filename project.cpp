@@ -12,8 +12,8 @@ using namespace std;
 #define mapay 1000
 #define gridsize 5100
 #define PI 3.14159265
-#define gridx floor(mapax/gridsize)
-#define gridy floor(mapay/gridsize)
+#define gridx (int) floor(mapax/gridsize)
+#define gridy (int) floor(mapay/gridsize)
 int finaly, finalx;
 int initx, inity;
 double angle;
@@ -35,19 +35,21 @@ typedef struct grid{
 
 
 //mapa
-grid pos [1000][1000];
+grid pos[1000][1000];
 
 
 //leitura de arquivo e inicialização do mapa e posição do robô
 void newMap(int fx, int fy){
+  printf("começou a rodar o mapa\n");
   for(int i = 0; i < mapay; i++){
     for(int j = 0; j < mapax; j++){
       pos[i][j] = grid();
     }
 
   }
-  pos[fy][fx].heur = 0;
-
+  printf("terminou \n");
+  pos[(int) floor(fy/gridsize)][(int) floor(fx/gridsize)].heur = 0;
+  printf("terminou \n");
 }
 
 //maeando atráves do sonar
@@ -72,10 +74,10 @@ for (i = 0; i < numSonar; i++){
   double angulo= rad*sonarRead->getSensorTh();
   //achando a posição no grid 
   int fx=x+(cos(angulo)*sonarRead->getRange());
-  fx=floor(fx/gridsize);
+  fx=(int) floor(fx/gridsize);
   printf("%d ", fx);
   int fy=y+(sin(angulo)*sonarRead->getRange());
-  fy=floor(fy/gridsize);
+  fy=(int) floor(fy/gridsize);
    printf("%d\n", fy);
   //Só marca como parede se for menor que o limite do sonar
       printf("%c\n", pos[fy][fx].rep);
@@ -139,20 +141,20 @@ ArPose passo(int x,int y, int th){
   while(!equalsArrayBi(coordAtual, coordFinal)){//testa se o ponto atual é igual ao final
     //Fase de exploracao
 
-    if(pos[coordAtual[0] - 510][coordAtual[1]].rep == ' '){
+    if(pos[(int)(int) floor( (coordAtual[0] - 510)/51) ][(int) floor(coordAtual[1]/51)].rep == ' '){
       coordTemp[0] = coordAtual[0] - 510;//andar para baixo
       coordTemp[1] = coordAtual[1];
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } else if(pos[coordAtual[0] + 510][coordAtual[1]].rep == ' '){
+    } else if(pos[(int) floor((coordAtual[0] + 510) / 51)][(int) floor(coordAtual[1]/51)].rep == ' '){
       coordTemp[0] = coordAtual[0] + 510;//andar para cima
       coordTemp[1] = coordAtual[1];
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } else if (pos[coordAtual[0]][coordAtual[1] + 510].rep == ' ')
+    } else if (pos[(int) floor(coordAtual[0]/51)][(int) floor((coordAtual[1] + 510)/51)].rep == ' ')
     {
       coordTemp[0] = coordAtual[0];//andar para esquerda
       coordTemp[1] = coordAtual[1] + 510;
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } else if (pos[coordAtual[0]][coordAtual[1] - 510].rep == ' ')
+    } else if (pos[(int) floor(coordAtual[0]/51)][(int) floor((coordAtual[1] - 510)/51)].rep == ' ')
     {
       coordTemp[0] = coordAtual[0];//andar para direita
       coordTemp[1] = coordAtual[1] - 510;
@@ -162,10 +164,10 @@ ArPose passo(int x,int y, int th){
     //fase de comparacao (ver se o topo da heap e melhor)
     ponto topo = pq.top(); 
     if(topo.heuristica > atual.heuristica){//ponto pior
-      pos[atual.coordenadas[0]][atual.coordenadas[1]].rep = '*';//ponto atual nao é um ponto bom
+      pos[(int) floor(atual.coordenadas[0]/51)][(int) floor(atual.coordenadas[1]/51)].rep = '*';//ponto atual nao é um ponto bom
       for(int i = 0; i < 4; i++){
         if(!equalsArrayBi(anterior.coordenadas, topo.coordenadas)){
-          pos[topo.coordenadas[0]][topo.coordenadas[1]].rep = '*';
+          pos[(int) floor(topo.coordenadas[0]/51)][(int) floor(topo.coordenadas[1]/51)].rep = '*';
         }
         pq.pop();
         topo = pq.top();
