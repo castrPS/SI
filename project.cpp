@@ -13,6 +13,8 @@ using namespace std;
 #define PI 3.14159265
 #define gridx floor(mapax/gridsize)
 #define gridy floor(mapay/gridsize)
+int finaly, finalx;
+mapa *map;
 
 class grid {
   public:
@@ -30,7 +32,13 @@ class mapa{
 
 //leitura de arquivo e inicialização do mapa e posição do robô
 void newMap(){
+  for(int i = 0; i < mapay; i++){
+    for(int j = 0; j < mapax, j++){
+      map = new grid();
+    }
 
+  }
+  map.pos[finaly][finalx].heur = 0;
 }
 
 //maeando atráves do sonar
@@ -73,6 +81,8 @@ for (i = 0; i < numSonar; i++){
   }
   }
 }
+
+
 int main(int argc, char **argv)
 {
   
