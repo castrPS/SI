@@ -7,8 +7,8 @@
 using namespace std;
 
 #define barreira INT_MAX
-#define mapax 24280
-#define mapay 51680
+#define mapax 24285
+#define mapay 51685
 #define gridsize 510
 #define PI 3.14159265
 #define gridx floor(mapax/gridsize)
