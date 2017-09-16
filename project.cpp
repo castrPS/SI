@@ -34,7 +34,7 @@ void newMap(){
 }
 
 //maeando atráves do sonar
-mapa sonar(ArRobot *thisRobot, int x, int y, mapa map)
+void sonarRound(ArRobot *thisRobot, int x, int y, int th, mapa *map)
 {
 
 int numSonar;
@@ -46,6 +46,7 @@ ArSensorReading* sonarReading;
 //To hold each reading
 for (i = 0; i < numSonar; i++){
   sonarReading = thisRobot->getSonarReading(i);
+  sonarReading->resetSensorPosition(x,y,th);
   //achando o angulo
   double rad= PI / 180.0;
   double angulo= rad*sonarReading->getSensorTh();
@@ -57,18 +58,18 @@ for (i = 0; i < numSonar; i++){
   //Só marca como parede se for menor que o limite do sonar
     if(sonarReading->getRange()<5000){
       //tratamentos para poder caber no mapa
-      if(map.pos.size()<=fy){
-        map.pos.resize(fy*2+1);
+      if(map->pos.size()<=fy){
+        map->pos.resize(fy*2+1);
       }
-      if(map.pos[0].size()<=fx){
-        for(int j=0; j<map.pos.size(); j++){
-          map.pos[j].resize(fx*2+1);
+      if(map->pos[0].size()<=fx){
+        for(int j=0; j<map->pos.size(); j++){
+          map->pos[j].resize(fx*2+1);
         }
       }
-      map.pos[fy][fx].rep='#';
-      map.pos[fy][fx].heur=INT_MAX;
-      map.pos[fy][fx].x=x+(cos(angulo)*sonarReading->getRange());
-      map.pos[fy][fx].x= y+(sin(angulo)*sonarReading->getRange());
+      map->pos[fy][fx].rep='#';
+      map->pos[fy][fx].heur=INT_MAX;
+      map->pos[fy][fx].x=x+(cos(angulo)*sonarReading->getRange());
+      map->pos[fy][fx].x= y+(sin(angulo)*sonarReading->getRange());
   }
   }
 }
@@ -141,8 +142,13 @@ int main(int argc, char **argv)
   ArTime start;
   start.setToNow();
 
+  //inicialização
+  int x, y, th;
+  mapa map;
+
   while (Aria::getRunning()) {
-    
+    sonarRound(&robot,20000,20000,100,&map);
+
   }
   
   // Robot disconnected or time elapsed, shut down
