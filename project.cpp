@@ -14,7 +14,8 @@ using namespace std;
 #define gridx floor(mapax/gridsize)
 #define gridy floor(mapay/gridsize)
 int finaly, finalx;
-mapa *map;
+int initx, inity;
+double angle;
 
 class grid {
   public:
@@ -25,24 +26,22 @@ class grid {
 };
 
 //mapa
-class mapa{
-  public:
-    vector< vector<grid> > pos;
-};
+vector< vector<grid> > pos;
+
 
 //leitura de arquivo e inicialização do mapa e posição do robô
-void newMap(){
+void newMap(int fx, int fy){
   for(int i = 0; i < mapay; i++){
-    for(int j = 0; j < mapax, j++){
-      map = new grid();
+    for(int j = 0; j < mapax; j++){
+      pos[i][j] = grid();
     }
 
   }
-  map.pos[finaly][finalx].heur = 0;
+  pos[fy][fx].heur = 0;
 }
 
 //maeando atráves do sonar
-void sonarRound(ArRobot *thisRobot, int x, int y, int th, mapa *map)
+void sonarRound(ArRobot *thisRobot, int x, int y, int th)
 {
 
 int numSonar;
@@ -66,18 +65,18 @@ for (i = 0; i < numSonar; i++){
   //Só marca como parede se for menor que o limite do sonar
     if(sonarReading->getRange()<5000){
       //tratamentos para poder caber no mapa
-      if(map->pos.size()<=fy){
-        map->pos.resize(fy*2+1);
+      if(pos.size()<=fy){
+        pos.resize(fy*2+1);
       }
-      if(map->pos[0].size()<=fx){
-        for(int j=0; j<map->pos.size(); j++){
-          map->pos[j].resize(fx*2+1);
+      if(pos[0].size()<=fx){
+        for(int j=0; j<pos.size(); j++){
+          pos[j].resize(fx*2+1);
         }
       }
-      map->pos[fy][fx].rep='#';
-      map->pos[fy][fx].heur=INT_MAX;
-      map->pos[fy][fx].x=x+(cos(angulo)*sonarReading->getRange());
-      map->pos[fy][fx].x= y+(sin(angulo)*sonarReading->getRange());
+      pos[fy][fx].rep='#';
+      pos[fy][fx].heur=INT_MAX;
+      pos[fy][fx].x=x+(cos(angulo)*sonarReading->getRange());
+      pos[fy][fx].x= y+(sin(angulo)*sonarReading->getRange());
   }
   }
 }
@@ -85,7 +84,9 @@ for (i = 0; i < numSonar; i++){
 
 int main(int argc, char **argv)
 {
-  
+  scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
+  scanf("%d %d", &finalx, &finaly); //posição final
+  newMap(finalx, finaly);
   Aria::init();
   ArArgumentParser parser(&argc, argv);
   parser.loadDefaultArguments();
@@ -153,11 +154,9 @@ int main(int argc, char **argv)
   start.setToNow();
 
   //inicialização
-  int x, y, th;
-  mapa map;
 
   while (Aria::getRunning()) {
-    sonarRound(&robot,20000,20000,100,&map);
+    sonarRound(&robot,20000,20000,100);
 
   }
   
