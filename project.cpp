@@ -105,7 +105,8 @@ typedef struct ponto{
 
 struct compare{
   bool operator()(const ponto& a, const ponto& b){
-      return a.heuristica < b.heuristica;
+      printf("%f   %f  \n\n\n", a.heuristica, b.heuristica);
+      return a.heuristica > b.heuristica;
 
     }
 };
@@ -119,72 +120,14 @@ static bool equalsArrayBi (double array[2], double array1[2]){
   return final;
 }
 static double distRet(double array[2], double array1[2]){
-  double x = (array[0] - array1[0])*(array[0] - array1[0]);
-  double y = (array[1] - array1[1])*(array[0] - array1[0]);
-  return sqrt(x + y);
+  double xa = (array[0] - array1[0])*(array[0] - array1[0]);
+  double ya = (array[1] - array1[1])*(array[1] - array1[1]);
+  return sqrt(xa + ya);
 }
 
-ArPose passo(int x,int y, int th){
-  printf("Começou a escolha de passo\n");
-  double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
-  coordAtual[0]=y;
-  coordAtual[1]=x;
-  ArPose at= ArPose(x,y,th);
-  double coordFinal[2];
-  double coordTemp[2];
-  ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
-  ponto anterior = atual;
-
-  stack< priority_queue<ponto, vector<ponto>, compare > > pilha;
-  priority_queue<ponto, vector<ponto>, compare >pq;
-
-  while(!equalsArrayBi(coordAtual, coordFinal)){//testa se o ponto atual é igual ao final
-    //Fase de exploracao
-
-    if(pos[(int)(int) floor( (coordAtual[0] - 510)/51) ][(int) floor(coordAtual[1]/51)].rep == ' '){
-      coordTemp[0] = coordAtual[0] - 510;//andar para baixo
-      coordTemp[1] = coordAtual[1];
-      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } else if(pos[(int) floor((coordAtual[0] + 510) / 51)][(int) floor(coordAtual[1]/51)].rep == ' '){
-      coordTemp[0] = coordAtual[0] + 510;//andar para cima
-      coordTemp[1] = coordAtual[1];
-      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } else if (pos[(int) floor(coordAtual[0]/51)][(int) floor((coordAtual[1] + 510)/51)].rep == ' ')
-    {
-      coordTemp[0] = coordAtual[0];//andar para esquerda
-      coordTemp[1] = coordAtual[1] + 510;
-      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } else if (pos[(int) floor(coordAtual[0]/51)][(int) floor((coordAtual[1] - 510)/51)].rep == ' ')
-    {
-      coordTemp[0] = coordAtual[0];//andar para direita
-      coordTemp[1] = coordAtual[1] - 510;
-      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    }
-
-    //fase de comparacao (ver se o topo da heap e melhor)
-    ponto topo = pq.top(); 
-    if(topo.heuristica > atual.heuristica){//ponto pior
-      pos[(int) floor(atual.coordenadas[0]/51)][(int) floor(atual.coordenadas[1]/51)].rep = '*';//ponto atual nao é um ponto bom
-      for(int i = 0; i < 4; i++){
-        if(!equalsArrayBi(anterior.coordenadas, topo.coordenadas)){
-          pos[(int) floor(topo.coordenadas[0]/51)][(int) floor(topo.coordenadas[1]/51)].rep = '*';
-        }
-        pq.pop();
-        topo = pq.top();
-      }
-      pq = pilha.top();
-      atual = anterior;
-      pilha.pop();
-    } else{
-      anterior = atual;//o ponto anterior será o que era atual
-      atual = topo;//o atual sera o melhor
-      pilha.push(pq);//e essa pq vai para pilha
-      pq = priority_queue<ponto, vector<ponto>, compare >();
-    }
-  }
-  ArPose fut= ArPose(atual.coordenadas[1],atual.coordenadas[0],0);
-  fut= ArPose(atual.coordenadas[1],atual.coordenadas[0],at.findAngleTo(fut));
-  return fut;
+static void passo(ArRobot *robot, int x,int y, int th){
+  
+  
 }
 
 
@@ -264,7 +207,7 @@ int main(int argc, char **argv)
 
   while (Aria::getRunning()) {
 
-    robot.lock();
+  robot.lock();
     //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
   //scanf("%d %d", &finalx, &finaly); //posição final
   initx=1000;
@@ -274,24 +217,92 @@ int main(int argc, char **argv)
   finaly=13000;
   newMap(finalx, finaly);
   robot.unlock();
-  while(true){
+  printf("Começou a escolha de passo\n");
+  double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
+  coordAtual[0]=inity;
+  coordAtual[1]=initx;
+  ArPose at= ArPose(coordAtual[1],coordAtual[0],angle);
+  double coordFinal[2];
+  coordFinal[1] = finalx;
+  coordFinal[0] = finaly;
+  double coordTemp[2];
+  ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
+  ponto anterior = atual;
+
+  stack< priority_queue<ponto, vector<ponto>, compare > > pilha;
+  priority_queue<ponto, vector<ponto>, compare >pq;
+
+  while(!equalsArrayBi(coordAtual, coordFinal)){//testa se o ponto atual é igual ao final
+    
+    //sonar
+    //robot.lock();
+    //sonarRound(&robot,coordAtual[1],coordAtual[0],angle);
+    //printf("rodou sonar");
+    //robot.unlock();
+
+    //Fase de exploracao
+    printf("comecou a explorar \n");
+
+    printf("antes:   %f , %f\n", coordAtual[1], coordAtual[0]);
     robot.lock();
-    sonarRound(&robot,initx,inity,angle);
-    printf("rodou sonar");
+    if(pos[(int)(int) floor( (coordAtual[0] - 510)/gridsize) ][(int) floor(coordAtual[1]/gridsize)].rep == ' '){
+      coordTemp[0] = coordAtual[0] - 510;//andar para baixo
+      coordTemp[1] = coordAtual[1];
+      //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    } if(pos[(int) floor((coordAtual[0] + 510) / gridsize)][(int) floor(coordAtual[1]/gridsize)].rep == ' '){
+      coordTemp[0] = coordAtual[0] + 510;//andar para cima
+      coordTemp[1] = coordAtual[1];
+      //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    } if (pos[(int) floor(coordAtual[0]/gridsize)][(int) floor((coordAtual[1] + 510)/gridsize)].rep == ' ')
+    {
+      coordTemp[0] = coordAtual[0];//andar para esquerda
+      coordTemp[1] = coordAtual[1] + 510;
+      //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    } if (pos[(int) floor(coordAtual[0]/gridsize)][(int) floor((coordAtual[1] - 510)/gridsize)].rep == ' ')
+    {
+      coordTemp[0] = coordAtual[0];//andar para direita
+      coordTemp[1] = coordAtual[1] - 510;
+      //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    }
     robot.unlock();
+    printf("explorou \n");
+    //fase de comparacao (ver se o topo da heap e melhor)
     robot.lock();
-    ArPose ir= passo(initx,inity,angle);
-    printf("setou para onde ir");
+    ponto topo = pq.top(); 
+  printf("heuristica atual: %f \n", atual.heuristica);
+  printf("topo heur: %f \n", topo.heuristica);
+    if(topo.heuristica > atual.heuristica){//ponto pior
+      pos[(int) floor(atual.coordenadas[0]/gridsize)][(int) floor(atual.coordenadas[1]/gridsize)].rep = '*';//ponto atual nao é um ponto bom
+      for(int i = 0; i < 4; i++){
+        if(!equalsArrayBi(anterior.coordenadas, topo.coordenadas)){
+          pos[(int) floor(topo.coordenadas[0]/gridsize)][(int) floor(topo.coordenadas[1]/gridsize)].rep = '*';
+        }
+        pq.pop();
+        topo = pq.top();
+      }
+      pq = pilha.top();
+      atual = anterior;
+      pilha.pop();
+    } else{
+
+      anterior = atual;//o ponto anterior será o que era atual
+      atual = topo;//o atual sera o melhor
+      pilha.push(pq);//e essa pq vai para pilha
+      pq = priority_queue<ponto, vector<ponto>, compare >();
+    }
+    coordAtual[0] = atual.coordenadas[0];
+    coordAtual[1] = atual.coordenadas[1];
+    printf("%f , %f\n", coordAtual[1], coordAtual[0]);
+    ArPose fut= ArPose(atual.coordenadas[1]-anterior.coordenadas[1],atual.coordenadas[0]-anterior.coordenadas[0]);
+    angle=at.findAngleTo(fut);
+    fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
+    gotoPoseAction.setGoal(fut);
     robot.unlock();
-    robot.lock();
-    gotoPoseAction.setGoal(ir);
-    robot.unlock();
-    robot.lock();
-    initx=ir.getX();
-    inity=ir.getY();
-    angle=ir.getTh();
-    robot.unlock();
-  }
+    }
   }
   // Robot disconnected or time elapsed, shut down
   Aria::exit(0);
