@@ -10,7 +10,7 @@ using namespace std;
 #define barreira INT_MAX
 #define mapax 1000
 #define mapay 1000
-#define gridsize 5100
+#define gridsize 510
 #define PI 3.14159265
 #define gridx (int) floor(mapax/gridsize)
 #define gridy (int) floor(mapay/gridsize)
@@ -245,8 +245,12 @@ int main(int argc, char **argv)
 
     printf("antes:   %f , %f\n", coordAtual[1], coordAtual[0]);
     robot.lock();
+
     int gridAtY=(int) floor((coordAtual[0])/gridsize);
     int gridAtX=(int) floor((coordAtual[1])/gridsize);
+
+    printf("%d %d\n", gridAtX, gridAtY );
+
     if(pos[gridAtY-1][gridAtX].rep == ' '){
       coordTemp[0] = coordAtual[0] - 510;//andar para baixo
       coordTemp[1] = coordAtual[1];
