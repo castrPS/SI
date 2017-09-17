@@ -14,6 +14,8 @@ using namespace std;
 #define PI 3.14159265
 #define gridx (int) floor(mapax/gridsize)
 #define gridy (int) floor(mapay/gridsize)
+
+int initialize=0;
 int finaly, finalx;
 int initx, inity;
 double angle;
@@ -206,9 +208,8 @@ int main(int argc, char **argv)
   //inicialização
 
   while (Aria::getRunning()) {
-
   robot.lock();
-    //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
+  //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
   //scanf("%d %d", &finalx, &finaly); //posição final
   initx=1000;
   inity=1500;
@@ -217,6 +218,13 @@ int main(int argc, char **argv)
   finaly=13000;
   newMap(finalx, finaly);
   robot.unlock();
+
+  robot.lock();
+  robot.moveTo(ArPose(initx,inity,angle),true);
+  printf("%f %f %f \n", robot.getX(), robot.getY(), robot.getTh());
+  robot.unlock();
+  
+
   printf("Começou a escolha de passo\n");
   double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
   coordAtual[0]=inity;
