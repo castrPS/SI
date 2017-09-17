@@ -245,25 +245,25 @@ int main(int argc, char **argv)
 
     printf("antes:   %f , %f\n", coordAtual[1], coordAtual[0]);
     robot.lock();
-    if(pos[(int)(int) floor( (coordAtual[0] - 510)/gridsize) ][(int) floor(coordAtual[1]/gridsize)].rep == ' '){
+    int gridAtY=(int) floor((coordAtual[0])/gridsize);
+    int gridAtX=(int) floor((coordAtual[1])/gridsize);
+    if(pos[gridAtY-1][gridAtX].rep == ' '){
       coordTemp[0] = coordAtual[0] - 510;//andar para baixo
       coordTemp[1] = coordAtual[1];
       //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } if(pos[(int) floor((coordAtual[0] + 510) / gridsize)][(int) floor(coordAtual[1]/gridsize)].rep == ' '){
+    } if(pos[gridAtY+1][gridAtX].rep == ' '){
       coordTemp[0] = coordAtual[0] + 510;//andar para cima
       coordTemp[1] = coordAtual[1];
       //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } if (pos[(int) floor(coordAtual[0]/gridsize)][(int) floor((coordAtual[1] + 510)/gridsize)].rep == ' ')
-    {
-      coordTemp[0] = coordAtual[0];//andar para esquerda
+    } if(pos[gridAtY][gridAtX+1].rep == ' '){
+      coordTemp[0] = coordAtual[0];//andar para direita
       coordTemp[1] = coordAtual[1] + 510;
       //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-    } if (pos[(int) floor(coordAtual[0]/gridsize)][(int) floor((coordAtual[1] - 510)/gridsize)].rep == ' ')
-    {
-      coordTemp[0] = coordAtual[0];//andar para direita
+    } if(pos[gridAtY][gridAtX-1].rep == ' '){
+      coordTemp[0] = coordAtual[0];//andar para esquerda
       coordTemp[1] = coordAtual[1] - 510;
       //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
       pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
   printf("Pilha top heur: %f\n", pilhaPonto.top().heuristica);
     if(topo.heuristica > atual.heuristica){//ponto pior
       printf("Piorou\n");
-      pos[(int) floor(atual.coordenadas[0]/gridsize)][(int) floor(atual.coordenadas[1]/gridsize)].rep = '*';//ponto atual nao é um ponto bom
+      pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
       for(int i = 0; i < 4; i++){
         if(!equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
           printf("%d if\n", i);
@@ -291,7 +291,11 @@ int main(int argc, char **argv)
       }
       pq = pilha.top();
       atual = pilhaPonto.top();
-      pilhaPonto.pop();
+
+      gridAtY=(int) floor((coordAtual[0])/gridsize);
+      gridAtX=(int) floor((coordAtual[1])/gridsize);
+      
+      pilhaPonto.pop();.
       pilha.pop();
     } else{
 
