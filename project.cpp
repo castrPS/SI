@@ -295,7 +295,7 @@ int main(int argc, char **argv)
       gridAtY=(int) floor((coordAtual[0])/gridsize);
       gridAtX=(int) floor((coordAtual[1])/gridsize);
       
-      pilhaPonto.pop();.
+      pilhaPonto.pop();
       pilha.pop();
     } else{
 
