@@ -227,13 +227,13 @@ int main(int argc, char **argv)
   coordFinal[0] = finaly;
   double coordTemp[2];
   ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
-  ponto anterior = atual;
 
   stack< priority_queue<ponto, vector<ponto>, compare > > pilha;
   priority_queue<ponto, vector<ponto>, compare >pq;
-
-  while(!equalsArrayBi(coordAtual, coordFinal)){//testa se o ponto atual é igual ao final
-    
+  stack< ponto > pilhaPonto;
+  pilhaPonto.push(atual);
+  //while(!equalsArrayBi(coordAtual, coordFinal)){//testa se o ponto atual é igual ao final
+    for(int yu = 0; yu < 2; yu++){
     //sonar
     //robot.lock();
     //sonarRound(&robot,coordAtual[1],coordAtual[0],angle);
@@ -275,21 +275,27 @@ int main(int argc, char **argv)
     ponto topo = pq.top(); 
   printf("heuristica atual: %f \n", atual.heuristica);
   printf("topo heur: %f \n", topo.heuristica);
+  printf("Pilha top heur: %f\n", pilhaPonto.top().heuristica);
     if(topo.heuristica > atual.heuristica){//ponto pior
+      printf("Piorou\n");
       pos[(int) floor(atual.coordenadas[0]/gridsize)][(int) floor(atual.coordenadas[1]/gridsize)].rep = '*';//ponto atual nao é um ponto bom
       for(int i = 0; i < 4; i++){
-        if(!equalsArrayBi(anterior.coordenadas, topo.coordenadas)){
+        if(!equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
+          printf("%d if\n", i);
+          printf("IF topo heur: %f \n", topo.heuristica);
+  printf("IF Pilha top heur: %f\n", pilhaPonto.top().heuristica);
           pos[(int) floor(topo.coordenadas[0]/gridsize)][(int) floor(topo.coordenadas[1]/gridsize)].rep = '*';
         }
         pq.pop();
         topo = pq.top();
       }
       pq = pilha.top();
-      atual = anterior;
+      atual = pilhaPonto.top();
+      pilhaPonto.pop();
       pilha.pop();
     } else{
 
-      anterior = atual;//o ponto anterior será o que era atual
+      pilhaPonto.push(atual);//o ponto anterior será o que era atual
       atual = topo;//o atual sera o melhor
       pilha.push(pq);//e essa pq vai para pilha
       pq = priority_queue<ponto, vector<ponto>, compare >();
@@ -297,7 +303,7 @@ int main(int argc, char **argv)
     coordAtual[0] = atual.coordenadas[0];
     coordAtual[1] = atual.coordenadas[1];
     printf("%f , %f\n", coordAtual[1], coordAtual[0]);
-    ArPose fut= ArPose(atual.coordenadas[1]-anterior.coordenadas[1],atual.coordenadas[0]-anterior.coordenadas[0]);
+    ArPose fut= ArPose(atual.coordenadas[1]-pilhaPonto.top().coordenadas[1],atual.coordenadas[0]-pilhaPonto.top().coordenadas[0]);
     angle=at.findAngleTo(fut);
     fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
     gotoPoseAction.setGoal(fut);
