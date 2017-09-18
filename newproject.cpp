@@ -171,8 +171,8 @@ int main(int argc, char **argv)
   initx=1000;
   inity=1500;
   angle=0;
-  finalx=13000;
-  finaly=1300;
+  finalx=2000;
+  finaly=13000;
   newMap(finalx, finaly);
 
   // Goto action at lower priority
@@ -295,29 +295,43 @@ int main(int argc, char **argv)
         printf("Piorou\n");
         pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
       for(int i = 0; i < 8; i++){
-        if(equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
+        if(!equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
           printf("%d if\n", i);
           printf("IF topo heur: %f \n", topo.heuristica);
           printf("IF Pilha top heur: %f\n", pilhaPonto.top().heuristica);
-          pos[(int) ceil(topo.coordenadas[0]/gridsize)][(int) ceil(topo.coordenadas[1]/gridsize)].rep = '*';
+          int aux1=(int) ceil(topo.coordenadas[0]/gridsize);
+          int aux2=(int) ceil(topo.coordenadas[1]/gridsize);
+          if(aux1>=0&&aux2>=0){
+            pos[aux1][aux2].rep = '*';
+            printf("ok\n");
+          }
         }
-        pq.pop();
-        topo = pq.top();
+        if(!pq.empty()){
+          pq.pop();
+          topo = pq.top();
+        }
       }
-      pq = pilha.top();
+      if(!pq.empty()){
+        pq = pilha.top();
+      }
       atual = pilhaPonto.top();
       printf(" if %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
 
       gridAtY=(int) ceil(robot.getY()/gridsize);
       gridAtX=(int) ceil(robot.getX()/gridsize);
-      
-      pilhaPonto.pop();
-      pilha.pop();
+      if(!pilhaPonto.empty()){
+        pilhaPonto.pop();
+      }
+      if(!pilha.empty()){
+        pilha.pop();
+      }
     } else{
       pilhaPonto.push(atual);//o ponto anterior será o que era atual
       atual = topo;//o atual sera o melhor
       printf(" else %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
-      pq.pop();
+      if(!pq.empty()){
+        pq.pop();
+      }
       pilha.push(pq);//e essa pq vai para pilha
       pq = priority_queue<ponto>();
     }
