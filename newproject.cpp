@@ -10,7 +10,7 @@ using namespace std;
 #define barreira INT_MAX
 #define mapax 1000
 #define mapay 1000
-#define gridsize 510
+#define gridsize 550
 #define PI 3.14159265
 
 int initialize=0;
@@ -87,16 +87,13 @@ typedef struct ponto{
         this->coordenadas = coordenadas;
     }
 
+    bool operator < (const ponto &pontoComparador) const{
+      return this->heuristica >= pontoComparador.heuristica;
+    }
 } ponto;
 
 
-struct compare{
-  bool operator()(const ponto& a, const ponto& b){
-      printf("Comparação %f   %f  \n\n\n", a.heuristica, b.heuristica);
-      return a.heuristica > b.heuristica;
 
-    }
-};
 static bool equalsArrayBi (double array[2], double array1[2]){
   bool final = true;
   for (int i = 0; i < 2; ++i)
@@ -179,7 +176,7 @@ int main(int argc, char **argv)
   newMap(finalx, finaly);
 
   // Goto action at lower priority
-  ArActionGoto gotoPoseAction("goto");
+  ArActionGotoStraight gotoPoseAction("goto");
   robot.addAction(&gotoPoseAction, 100);
   
   // Stop action at lower priority, so the robot stops if it has no goal
@@ -215,8 +212,8 @@ int main(int argc, char **argv)
   double coordTemp[2];
   ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
 
-  stack< priority_queue<ponto, vector<ponto>, compare > > pilha;
-  priority_queue<ponto, vector<ponto>, compare >pq;
+  stack< priority_queue<ponto> > pilha;
+  priority_queue<ponto>pq;
   stack< ponto > pilhaPonto;
   pilhaPonto.push(atual);
 
@@ -232,20 +229,7 @@ int main(int argc, char **argv)
       coordAtual[1]=robot.getX();
 
       //Analise dos pontos ao redor
-      if(pos[gridAtY-1][gridAtX].rep == ' '){
-        
-        coordTemp[0] = coordAtual[0] - gridsize  ;//andar para baixo
-        coordTemp[1] = coordAtual[1];
-        printf("baixo,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(pos[gridAtY+1][gridAtX].rep == ' '){
-        coordTemp[0] = coordAtual[0] + gridsize;//andar para cima
-        coordTemp[1] = coordAtual[1];
-        printf("cima,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(pos[gridAtY][gridAtX-1].rep == ' '){
+       if(pos[gridAtY][gridAtX-1].rep == ' '){
         coordTemp[0] = coordAtual[0];//andar para esquerda
         coordTemp[1] = coordAtual[1] - gridsize;
         printf("esquerda,%f,%f\n",coordTemp[1], coordTemp[0]);
@@ -257,7 +241,20 @@ int main(int argc, char **argv)
         printf("direita,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } 
+      } if(pos[gridAtY+1][gridAtX].rep == ' '){
+        coordTemp[0] = coordAtual[0] + gridsize;//andar para cima
+        coordTemp[1] = coordAtual[1];
+        printf("cima,%f,%f\n",coordTemp[1], coordTemp[0]);
+        //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+      } if(pos[gridAtY-1][gridAtX].rep == ' '){
+        
+        coordTemp[0] = coordAtual[0] - gridsize  ;//andar para baixo
+        coordTemp[1] = coordAtual[1];
+        printf("baixo,%f,%f\n",coordTemp[1], coordTemp[0]);
+        //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
+        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+      }
 
       ponto topo = pq.top();
       printf(" primeiro topo %f %f\n",topo.coordenadas[1],topo.coordenadas[0]); 
@@ -290,7 +287,7 @@ int main(int argc, char **argv)
       atual = topo;//o atual sera o melhor
       printf(" else %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
       pilha.push(pq);//e essa pq vai para pilha
-      pq = priority_queue<ponto, vector<ponto>, compare >();
+      pq = priority_queue<ponto>();
     }
 
       coordAtual[0] = atual.coordenadas[0];
