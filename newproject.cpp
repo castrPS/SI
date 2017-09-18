@@ -40,16 +40,16 @@ grid pos[1000][1000];
 
 //leitura de arquivo e inicialização do mapa e posição do robô
 void newMap(int fx, int fy){
-  printf("começou a rodar o mapa\n");
+  //printf("começou a rodar o mapa\n");
   for(int i = 0; i < mapay; i++){
     for(int j = 0; j < mapax; j++){
       pos[i][j] = grid();
     }
 
   }
-  printf("terminou \n");
+  //printf("terminou \n");
   pos[(int) floor(fy/gridsize)][(int) floor(fx/gridsize)].heur = 0;
-  printf("terminou \n");
+  //printf("terminou \n");
 }
 
 //maeando atráves do sonar
@@ -59,17 +59,19 @@ double y= thisRobot->getY();
 double th=thisRobot->getTh();
 int numSonar=thisRobot->getNumSonar(); //Get number of sonar
 ArSensorReading* sonarRead;
-printf("pegou leituras do sonar\n");
+//printf("pegou leituras do sonar\n");
 //To hold each reading
 for (int i = 0; i < numSonar; i++){
   sonarRead = thisRobot->getSonarReading(i);
-  printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
+  //printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
   if(sonarRead->getRange()<5000){
-  int gridx=(int) floor((sonarRead->getX()/gridsize));
-  int gridy=(int) floor((sonarRead->getY()/gridsize));
-  printf("Mapa %d %d %d\n", i, gridx, gridy);
-  pos[gridy][gridx].rep='#';
-  pos[gridy][gridx].heur=INT_MAX;
+    int gridx=(int) floor((sonarRead->getX()/gridsize));
+    int gridy=(int) floor((sonarRead->getY()/gridsize));
+    if(gridx>0&&gridy>0){
+      //printf("Mapa %d %d %d\n", i, gridx, gridy);
+      pos[gridy][gridx].rep='#';
+      pos[gridy][gridx].heur=INT_MAX;
+    }
   } 
   }
 }
@@ -175,7 +177,7 @@ int main(int argc, char **argv)
   inity=1500;
   angle=0;
   finalx=13000;
-  finaly=13000;
+  finaly=1300;
   newMap(finalx, finaly);
 
   // Goto action at lower priority
@@ -200,11 +202,106 @@ int main(int argc, char **argv)
 
 
   //inicialização
-  robot.moveTo(ArPose(initx,inity,angle),true);
+  robot.moveTo(ArPose(initx,inity,angle),true);//creio que o erro esteja aqui!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
 
   while (Aria::getRunning()) {
-    sonarRound(&robot);
+
+    //inicializando variaveis do final
+    double coordFinal[2];
+    coordFinal[1] = finalx;
+    coordFinal[0] = finaly;
+    int gFX= (int) floor(finalx/gridsize); //grid final x
+    int gFY=(int) floor(finaly/gridsize);  //grid final y
+
+    //inicializado variaveis atuais
+    double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
+    coordAtual[0]=inity;
+    coordAtual[1]=initx;
+    int gridAtX= (int) floor(robot.getX()/gridsize);  //grid X atual do robô
+    int gridAtY= (int) floor(robot.getY()/gridsize);  //grid Y atual do robô
+
+    double coordTemp[2];
+    ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
+
+    stack< priority_queue<ponto, vector<ponto>, compare > > pilha;
+    priority_queue<ponto, vector<ponto>, compare >pq;
+    stack< ponto > pilhaPonto;
+    pilhaPonto.push(atual);
+    //bool checagem = false;
+    while(gridAtX!=gFX &&  gridAtY!=gFY){
+      printf("Entrou no while\n");
+      //if(checagem)
+       // break;
+      sonarRound(&robot);
+
+      double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
+      coordAtual[0]=robot.getY();
+      coordAtual[1]=robot.getX();
+
+      //Analise dos pontos ao redor
+      if(pos[gridAtY-1][gridAtX].rep == ' '){
+        coordTemp[0] = coordAtual[0] - 510;//andar para baixo
+        coordTemp[1] = coordAtual[1];
+        //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
+        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+      } if(pos[gridAtY+1][gridAtX].rep == ' '){
+        coordTemp[0] = coordAtual[0] + 510;//andar para cima
+        coordTemp[1] = coordAtual[1];
+        //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+      } if(pos[gridAtY][gridAtX+1].rep == ' '){
+        coordTemp[0] = coordAtual[0];//andar para direita
+        coordTemp[1] = coordAtual[1] + 510;
+        //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
+        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+      } if(pos[gridAtY][gridAtX-1].rep == ' '){
+        coordTemp[0] = coordAtual[0];//andar para esquerda
+        coordTemp[1] = coordAtual[1] - 510;
+        //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+      }
+
+      ponto topo = pq.top(); 
+      printf("heuristica atual: %f \n", atual.heuristica);
+      printf("topo heur: %f \n", topo.heuristica);
+      printf("Pilha top heur: %f\n", pilhaPonto.top().heuristica);
+      if(topo.heuristica > atual.heuristica){//ponto pior
+        printf("Piorou\n");
+        pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
+      for(int i = 0; i < 4; i++){
+        if(!equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
+          printf("%d if\n", i);
+          printf("IF topo heur: %f \n", topo.heuristica);
+          printf("IF Pilha top heur: %f\n", pilhaPonto.top().heuristica);
+          pos[(int) floor(topo.coordenadas[0]/gridsize)][(int) floor(topo.coordenadas[1]/gridsize)].rep = '*';
+        }
+        pq.pop();
+        topo = pq.top();
+      }
+      pq = pilha.top();
+      atual = pilhaPonto.top();
+
+      gridAtY=(int) floor(robot.getY()/gridsize);
+      gridAtX=(int) floor(robot.getX()/gridsize);
+      
+      pilhaPonto.pop();
+      pilha.pop();
+    } else{
+      pilhaPonto.push(atual);//o ponto anterior será o que era atual
+      atual = topo;//o atual sera o melhor
+      pilha.push(pq);//e essa pq vai para pilha
+      pq = priority_queue<ponto, vector<ponto>, compare >();
+    }
+
+      coordAtual[0] = atual.coordenadas[0];
+      coordAtual[1] = atual.coordenadas[1];
+      int gridAtX= (int) floor(robot.getX()/gridsize);  //grid X atual do robô
+      int gridAtY= (int) floor(robot.getY()/gridsize);  //grid Y atual do robô
+      ArPose fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
+
+      //checagem = true;
+    }
     
   }
   // Robot disconnected or time elapsed, shut down
