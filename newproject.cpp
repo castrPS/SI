@@ -48,7 +48,7 @@ void newMap(int fx, int fy){
 
   }
   //printf("terminou \n");
-  pos[(int) floor(fy/gridsize)][(int) floor(fx/gridsize)].heur = 0;
+  pos[(int) ceil(fy/gridsize)][(int) ceil(fx/gridsize)].heur = 0;
   //printf("terminou \n");
 }
 
@@ -64,9 +64,9 @@ ArSensorReading* sonarRead;
 for (int i = 0; i < numSonar; i++){
   sonarRead = thisRobot->getSonarReading(i);
   //printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
-  if(sonarRead->getRange()<5100){
-    int gridx=(int) floor((sonarRead->getX()/gridsize));
-    int gridy=(int) floor((sonarRead->getY()/gridsize));
+  if(sonarRead->getRange()<5000){
+    int gridx=(int) ceil((sonarRead->getX()/gridsize));
+    int gridy=(int) ceil((sonarRead->getY()/gridsize));
     if(gridx>0&&gridy>0){
       //printf("Mapa %d %d %d\n", i, gridx, gridy);
       pos[gridy][gridx].rep='#';
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 
   // Collision avoidance actions at higher priority
   ArActionLimiterForwards limiterAction("speed limiter near", 300, 600, 250);
-  ArActionLimiterForwards limiterFarAction("speed limiter far", 300, 1100, 510);
+  ArActionLimiterForwards limiterFarAction("speed limiter far", 300, 1100, 400);
   ArActionLimiterTableSensor tableLimiterAction;
   robot.addAction(&tableLimiterAction, 100);
   robot.addAction(&limiterAction, 95);
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
   //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
   //scanf("%d %d", &finalx, &finaly); //posição final
   initx=1000;
-  inity=1510;
+  inity=1500;
   angle=0;
   finalx=13000;
   finaly=1300;
@@ -178,7 +178,6 @@ int main(int argc, char **argv)
   // Goto action at lower priority
   ArActionGoto gotoPoseAction("goto");
   robot.addAction(&gotoPoseAction, 100);
-  gotoPoseAction.setCloseDist(255);
   
   // Stop action at lower priority, so the robot stops if it has no goal
   ArActionStop stopAction("stop");
@@ -200,15 +199,15 @@ int main(int argc, char **argv)
   double coordFinal[2];
   coordFinal[1] = finalx;
   coordFinal[0] = finaly;
-  int gFX= (int) floor(finalx/gridsize); //grid final x
-  int gFY=(int) floor(finaly/gridsize);  //grid final y
+  int gFX= (int) ceil(finalx/gridsize); //grid final x
+  int gFY=(int) ceil(finaly/gridsize);  //grid final y
 
   //inicializado variaveis atuais
   double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
   coordAtual[0]=inity;
   coordAtual[1]=initx;
-  int gridAtX= (int) floor(robot.getX()/gridsize);  //grid X atual do robô
-  int gridAtY= (int) floor(robot.getY()/gridsize);  //grid Y atual do robô
+  int gridAtX= (int) ceil(robot.getX()/gridsize);  //grid X atual do robô
+  int gridAtY= (int) ceil(robot.getY()/gridsize);  //grid Y atual do robô
 
   double coordTemp[2];
   ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
@@ -221,7 +220,7 @@ int main(int argc, char **argv)
   while (Aria::getRunning()) {
     //robot.lock();
     sonarRound(&robot);
-    if(first||gotoPoseAction.haveAchievedGoal()){
+    //if(first||gotoPoseAction.haveAchievedGoal()){
       first=false;
       //if(checagem)
        // break;
@@ -229,62 +228,61 @@ int main(int argc, char **argv)
       coordAtual[0]=robot.getY();
       coordAtual[1]=robot.getX();
 
-      if(gridAtY>=0&&gridAtX>=0){
+
       if(pos[gridAtY][gridAtX+1].rep == ' '){
         coordTemp[0] = coordAtual[0];//andar para direita
-        coordTemp[1] = coordAtual[1] + 510;
+        coordTemp[1] = coordAtual[1] + gridsize;
         printf("direita,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
       }
-      if(gridAtY!=0&&gridAtX!=0&&pos[gridAtY - 1][gridAtX-1].rep == ' '){
-        coordTemp[0] = coordAtual[0] - 510;//andar para esquerda
-        coordTemp[1] = coordAtual[1] - 510;
+      if(pos[gridAtY - 1][gridAtX-1].rep == ' '){
+        coordTemp[0] = coordAtual[0] - gridsize;//andar para esquerda
+        coordTemp[1] = coordAtual[1] - gridsize;
         printf("sudoeste,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
       } if(pos[gridAtY + 1][gridAtX+1].rep == ' '){
-        coordTemp[0] = coordAtual[0] + 510;//andar para direita
-        coordTemp[1] = coordAtual[1] + 510;
+        coordTemp[0] = coordAtual[0] + gridsize;//andar para direita
+        coordTemp[1] = coordAtual[1] + gridsize;
         printf("nordeste,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(gridAtX!=0&&pos[gridAtY+1][gridAtX - 1].rep == ' '){
-        coordTemp[0] = coordAtual[0] + 510;//andar para cima
-        coordTemp[1] = coordAtual[1] - 510;
+      } if(pos[gridAtY+1][gridAtX - 1].rep == ' '){
+        coordTemp[0] = coordAtual[0] + gridsize;//andar para cima
+        coordTemp[1] = coordAtual[1] - gridsize;
         printf("noroeste,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(gridAtY!=0&&pos[gridAtY-1][gridAtX + 1].rep == ' '){
+      } if(pos[gridAtY-1][gridAtX + 1].rep == ' '){
         
-        coordTemp[0] = coordAtual[0] - 510;//andar para baixo
-        coordTemp[1] = coordAtual[1] + 510;
+        coordTemp[0] = coordAtual[0] - gridsize;//andar para baixo
+        coordTemp[1] = coordAtual[1] + gridsize;
         printf("sudeste,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
       }
       //Analise dos pontos ao redor
 
-       if(gridAtX!=0&&pos[gridAtY][gridAtX-1].rep == ' '){
+       if(pos[gridAtY][gridAtX-1].rep == ' '){
         coordTemp[0] = coordAtual[0];//andar para esquerda
-        coordTemp[1] = coordAtual[1] - 510;
+        coordTemp[1] = coordAtual[1] - gridsize;
         printf("esquerda,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
       }  if(pos[gridAtY+1][gridAtX].rep == ' '){
-        coordTemp[0] = coordAtual[0] + 510;//andar para cima
+        coordTemp[0] = coordAtual[0] + gridsize;//andar para cima
         coordTemp[1] = coordAtual[1];
         printf("cima,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(gridAtY!=0&&pos[gridAtY-1][gridAtX].rep == ' '){
+      } if(pos[gridAtY-1][gridAtX].rep == ' '){
         
-        coordTemp[0] = coordAtual[0] - 510;//andar para baixo
+        coordTemp[0] = coordAtual[0] - gridsize;//andar para baixo
         coordTemp[1] = coordAtual[1];
         printf("baixo,%f,%f\n",coordTemp[1], coordTemp[0]);
         //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
         pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      }
       }
 /*
        
@@ -295,17 +293,13 @@ int main(int argc, char **argv)
       printf("Pilha top heur: %f\n", pilhaPonto.top().heuristica);
       if(topo.heuristica > atual.heuristica){//ponto pior
         printf("Piorou\n");
-        if(gridAtY>=0&&gridAtX>=0)
-          pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
+        pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
       for(int i = 0; i < 8; i++){
         if(equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
           printf("%d if\n", i);
           printf("IF topo heur: %f \n", topo.heuristica);
           printf("IF Pilha top heur: %f\n", pilhaPonto.top().heuristica);
-          int floorY=(int) floor(topo.coordenadas[0]/gridsize);
-          int floorX=(int) floor(topo.coordenadas[1]/gridsize);
-          if(floorX>=0&&floorY>=0) 
-            pos[floorY][floorX].rep = '*';
+          pos[(int) ceil(topo.coordenadas[0]/gridsize)][(int) ceil(topo.coordenadas[1]/gridsize)].rep = '*';
         }
         pq.pop();
         topo = pq.top();
@@ -314,8 +308,8 @@ int main(int argc, char **argv)
       atual = pilhaPonto.top();
       printf(" if %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
 
-      gridAtY=(int) floor(robot.getY()/gridsize);
-      gridAtX=(int) floor(robot.getX()/gridsize);
+      gridAtY=(int) ceil(robot.getY()/gridsize);
+      gridAtX=(int) ceil(robot.getX()/gridsize);
       
       pilhaPonto.pop();
       pilha.pop();
@@ -330,15 +324,15 @@ int main(int argc, char **argv)
 
       coordAtual[0] = atual.coordenadas[0];
       coordAtual[1] = atual.coordenadas[1];
-      int gridAtX= (int) floor(robot.getX()/gridsize);  //grid X atual do robô
-      int gridAtY= (int) floor(robot.getY()/gridsize);  //grid Y atual do robô
+      int gridAtX= (int) ceil(robot.getX()/gridsize);  //grid X atual do robô
+      int gridAtY= (int) ceil(robot.getY()/gridsize);  //grid Y atual do robô
       printf(" escolhido %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
       ArPose fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
       gotoPoseAction.setGoal(fut);
       //checagem = true;
     }
     //robot.unlock();
-  }
+  //}
   // Robot disconnected or time elapsed, shut down
   Aria::exit(0);
   return 0;
