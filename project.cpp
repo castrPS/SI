@@ -12,6 +12,8 @@ using namespace std;
 #define mapay 1000
 #define gridsize 510
 #define PI 3.14159265
+#define gridx (int) floor(mapax/gridsize)
+#define gridy (int) floor(mapay/gridsize)
 
 int initialize=0;
 int finaly, finalx;
@@ -53,24 +55,39 @@ void newMap(int fx, int fy){
 }
 
 //maeando atráves do sonar
-void sonarRound(ArRobot *thisRobot){
-double x= thisRobot->getX();
-double y= thisRobot->getY();
-double th=thisRobot->getTh();
-int numSonar=thisRobot->getNumSonar(); //Get number of sonar
+void sonarRound(ArRobot *thisRobot, int x, int y, int th)
+{
+
+int numSonar;
+int i;
+//Number of sonar on the robot
+//Counter for looping
+numSonar = thisRobot->getNumSonar(); //Get number of sonar
+printf("pegou numero\n");
 ArSensorReading* sonarRead;
 printf("pegou leituras do sonar\n");
 //To hold each reading
-for (int i = 0; i < numSonar; i++){
+for (i = 0; i < numSonar; i++){
   sonarRead = thisRobot->getSonarReading(i);
-  printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
-  if(sonarRead->getRange()<5000){
-  int gridx=(int) floor((sonarRead->getX()/gridsize));
-  int gridy=(int) floor((sonarRead->getY()/gridsize));
-  printf("Mapa %d %d %d\n", i, gridx, gridy);
-  pos[gridy][gridx].rep='#';
-  pos[gridy][gridx].heur=INT_MAX;
-  } 
+  printf("Leitura %d: %f \n", i, sonarRead->getRange());
+  //sonarReading->resetSensorPosition(x,y,th);
+  //achando o angulo
+  double rad= PI / 180.0;
+  double angulo= rad*sonarRead->getSensorTh();
+  //achando a posição no grid 
+  int fx=x+(cos(angulo)*sonarRead->getRange());
+  fx=(int) floor(fx/gridsize);
+  printf("%d ", fx);
+  int fy=y+(sin(angulo)*sonarRead->getRange());
+  fy=(int) floor(fy/gridsize);
+   printf("%d\n", fy);
+  //Só marca como parede se for menor que o limite do sonar
+      printf("%c\n", pos[fy][fx].rep);
+      pos[fy][fx].rep='#';
+      printf("marquei como parede\n");
+      pos[fy][fx].heur=INT_MAX;
+      pos[fy][fx].x=x+(cos(angulo)*sonarRead->getRange());
+      pos[fy][fx].x= y+(sin(angulo)*sonarRead->getRange());
   }
 }
 
@@ -168,16 +185,6 @@ int main(int argc, char **argv)
   robot.addAction(&limiterAction, 95);
   robot.addAction(&limiterFarAction, 90);
 
-
-  //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
-  //scanf("%d %d", &finalx, &finaly); //posição final
-  initx=1000;
-  inity=1500;
-  angle=0;
-  finalx=13000;
-  finaly=13000;
-  newMap(finalx, finaly);
-
   // Goto action at lower priority
   ArActionGoto gotoPoseAction("goto");
   robot.addAction(&gotoPoseAction, 50);
@@ -189,7 +196,6 @@ int main(int argc, char **argv)
 
   // turn on the motors, turn off amigobot sounds
   robot.enableMotors();
-  robot.enableSonar();
   robot.comInt(ArCommands::SOUNDTOG, 0);
 
   bool first = true;
@@ -200,12 +206,125 @@ int main(int argc, char **argv)
 
 
   //inicialização
-  robot.moveTo(ArPose(initx,inity,angle),true);
-  
 
   while (Aria::getRunning()) {
-    sonarRound(&robot);
-    
+  robot.lock();
+  //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
+  //scanf("%d %d", &finalx, &finaly); //posição final
+  initx=1000;
+  inity=1500;
+  angle=0;
+  finalx=13000;
+  finaly=13000;
+  newMap(finalx, finaly);
+  robot.unlock();
+
+  robot.lock();
+  robot.moveTo(ArPose(initx,inity,angle),true);
+  printf("%f %f %f \n", robot.getX(), robot.getY(), robot.getTh());
+  robot.unlock();
+  
+
+  printf("Começou a escolha de passo\n");
+  double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
+  coordAtual[0]=inity;
+  coordAtual[1]=initx;
+  ArPose at= ArPose(coordAtual[1],coordAtual[0],angle);
+  double coordFinal[2];
+  coordFinal[1] = finalx;
+  coordFinal[0] = finaly;
+  double coordTemp[2];
+  ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
+
+  stack< priority_queue<ponto, vector<ponto>, compare > > pilha;
+  priority_queue<ponto, vector<ponto>, compare >pq;
+  stack< ponto > pilhaPonto;
+  pilhaPonto.push(atual);
+  //while(!equalsArrayBi(coordAtual, coordFinal)){//testa se o ponto atual é igual ao final
+    for(int yu = 0; yu < 2; yu++){
+    //sonar
+    //robot.lock();
+    //sonarRound(&robot,coordAtual[1],coordAtual[0],angle);
+    //printf("rodou sonar");
+    //robot.unlock();
+
+    //Fase de exploracao
+    printf("comecou a explorar \n");
+
+    printf("antes:   %f , %f\n", coordAtual[1], coordAtual[0]);
+    robot.lock();
+
+    int gridAtY=(int) floor((coordAtual[0])/gridsize);
+    int gridAtX=(int) floor((coordAtual[1])/gridsize);
+
+    printf("%d %d\n", gridAtX, gridAtY );
+
+    if(pos[gridAtY-1][gridAtX].rep == ' '){
+      coordTemp[0] = coordAtual[0] - 510;//andar para baixo
+      coordTemp[1] = coordAtual[1];
+      //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    } if(pos[gridAtY+1][gridAtX].rep == ' '){
+      coordTemp[0] = coordAtual[0] + 510;//andar para cima
+      coordTemp[1] = coordAtual[1];
+      //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    } if(pos[gridAtY][gridAtX+1].rep == ' '){
+      coordTemp[0] = coordAtual[0];//andar para direita
+      coordTemp[1] = coordAtual[1] + 510;
+      //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    } if(pos[gridAtY][gridAtX-1].rep == ' '){
+      coordTemp[0] = coordAtual[0];//andar para esquerda
+      coordTemp[1] = coordAtual[1] - 510;
+      //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
+      pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
+    }
+    robot.unlock();
+    printf("explorou \n");
+    //fase de comparacao (ver se o topo da heap e melhor)
+    robot.lock();
+    ponto topo = pq.top(); 
+  printf("heuristica atual: %f \n", atual.heuristica);
+  printf("topo heur: %f \n", topo.heuristica);
+  printf("Pilha top heur: %f\n", pilhaPonto.top().heuristica);
+    if(topo.heuristica > atual.heuristica){//ponto pior
+      printf("Piorou\n");
+      pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
+      for(int i = 0; i < 4; i++){
+        if(!equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
+          printf("%d if\n", i);
+          printf("IF topo heur: %f \n", topo.heuristica);
+  printf("IF Pilha top heur: %f\n", pilhaPonto.top().heuristica);
+          pos[(int) floor(topo.coordenadas[0]/gridsize)][(int) floor(topo.coordenadas[1]/gridsize)].rep = '*';
+        }
+        pq.pop();
+        topo = pq.top();
+      }
+      pq = pilha.top();
+      atual = pilhaPonto.top();
+
+      gridAtY=(int) floor((coordAtual[0])/gridsize);
+      gridAtX=(int) floor((coordAtual[1])/gridsize);
+      
+      pilhaPonto.pop();
+      pilha.pop();
+    } else{
+
+      pilhaPonto.push(atual);//o ponto anterior será o que era atual
+      atual = topo;//o atual sera o melhor
+      pilha.push(pq);//e essa pq vai para pilha
+      pq = priority_queue<ponto, vector<ponto>, compare >();
+    }
+    coordAtual[0] = atual.coordenadas[0];
+    coordAtual[1] = atual.coordenadas[1];
+    printf("%f , %f\n", coordAtual[1], coordAtual[0]);
+    ArPose fut= ArPose(atual.coordenadas[1]-pilhaPonto.top().coordenadas[1],atual.coordenadas[0]-pilhaPonto.top().coordenadas[0]);
+    angle=at.findAngleTo(fut);
+    fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
+    gotoPoseAction.setGoal(fut);
+    robot.unlock();
+    }
   }
   // Robot disconnected or time elapsed, shut down
   Aria::exit(0);
