@@ -170,8 +170,13 @@ int main(int argc, char **argv)
   robot.addAction(&limiterFarAction, 90);
 
 
-  scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
-  scanf("%d %d", &finalx, &finaly); //posição final
+    FILE *arq;
+  arq = fopen("saida.txt","wt");
+  FILE * pFile;
+  pFile = fopen ("entrada.txt","rt");
+
+  fscanf(pFile,"%d %d %lf\n%d %d", &initx, &inity, &angle,&finalx, &finaly); //posição inicial do robô
+  printf("%d %d %lf\n%d %d", initx, inity, angle,finalx, finaly); //
   
   //inicialização forçada 
   /*initx=1000;
@@ -338,12 +343,12 @@ int main(int argc, char **argv)
       gotoPoseAction.setGoal(fut);
       
       //impressao do mapa
-      /*for(int i=0; i<100;i++){
+      for(int i=0; i<100;i++){
          for(int j=0; j<100;j++){
-            printf("%c ", pos[i][j].rep);
-      } printf("\n");
+            fprintf(arq,"%c ", pos[i][j].rep);
+      } fprintf(arq,"\n");
       }
-        printf("\n\n\n");*/
+        fprintf(arq,"\n\n\n");
       robot.unlock();
       ArUtil::sleep(100);
     }
