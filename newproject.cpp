@@ -10,7 +10,7 @@ using namespace std;
 #define barreira INT_MAX
 #define mapax 1000
 #define mapay 1000
-#define gridsize 540
+#define gridsize 270
 #define PI 3.14159265
 
 int initialize=0;
@@ -66,7 +66,15 @@ for (int i = 0; i < numSonar; i++){
   //printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
   if(sonarRead->getRange()<5000){
     int gridx=(int) floor((sonarRead->getX()/gridsize));
+
     int gridy=(int) floor((sonarRead->getY()/gridsize));
+    if(gridx>0&&gridy>0){
+      //printf("Mapa %d %d %d\n", i, gridx, gridy);
+      pos[gridy][gridx].rep='#';
+      pos[gridy][gridx].heur=INT_MAX;
+    }
+    gridx=(int) ceil((sonarRead->getX()/gridsize));
+    gridy=(int) ceil((sonarRead->getY()/gridsize));
     if(gridx>0&&gridy>0){
       //printf("Mapa %d %d %d\n", i, gridx, gridy);
       pos[gridy][gridx].rep='#';
