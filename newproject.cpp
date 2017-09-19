@@ -345,6 +345,15 @@ int main(int argc, char **argv)
       ArPose fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
       gotoPoseAction.setGoal(fut);
       //checagem = true;
+
+	//impressao do mapa
+      for(int i=0; i<100;i++){
+         for(int j=0; j<100;j++){
+            fprintf(arq,"%c ", pos[i][j].rep);
+      } fprintf(arq,"\n");
+      }
+        fprintf(arq,"\n\n\n");
+
     }
     //robot.unlock();
   //}
