@@ -10,10 +10,10 @@ using namespace std;
 #define barreira INT_MAX
 #define mapax 1000
 #define mapay 1000
-#define gridsize 530
+#define gridsize 170
 #define PI 3.14159265
 
-int initize=0;
+int initialize=0;
 int finaly, finalx;
 int initx, inity;
 double angle;
@@ -66,20 +66,20 @@ for (int i = 0; i < numSonar; i++){
   //printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
   if(sonarRead->getRange()<5000){
     int gridx=(int) floor((sonarRead->getX()/gridsize));
+
     int gridy=(int) floor((sonarRead->getY()/gridsize));
     if(gridx>0&&gridy>0){
       //printf("Mapa %d %d %d\n", i, gridx, gridy);
       pos[gridy][gridx].rep='#';
       pos[gridy][gridx].heur=INT_MAX;
     }
-
-    /*gridx=(int) floor((sonarRead->getX()/gridsize));
-    gridy=(int) floor((sonarRead->getY()/gridsize));
+    gridx=(int) ceil((sonarRead->getX()/gridsize));
+    gridy=(int) ceil((sonarRead->getY()/gridsize));
     if(gridx>0&&gridy>0){
       //printf("Mapa %d %d %d\n", i, gridx, gridy);
       pos[gridy][gridx].rep='#';
       pos[gridy][gridx].heur=INT_MAX;
-    }*/
+    }
   } 
   }
 }
@@ -107,6 +107,7 @@ static bool comparePoints(double x1, double y1, double x2, double y2){
 static double distRet(double x1, double y1, double x2, double y2){
   return ArMath::distanceBetween(x1,y1,x2,y2);
 }
+
 
 
 
@@ -213,7 +214,7 @@ int main(int argc, char **argv)
   priority_queue<ponto> minHeap;//min-heap de exploração atual
   stack< ponto > anterior;//pilha de ponto anterior, para saber qual foi o último ponto visitado
   int contadorDeAdd;
- 
+
   ponto atual = ponto (distRet(initx, inity, finalx, finaly), initx, inity);
   anterior.push(atual);
 
@@ -341,12 +342,9 @@ int main(int argc, char **argv)
         }
         printf("fim das comparacoes do pontos explorados\n");
         gotoPoseAction.setGoal(ArPose(atual.x,atual.y));
-        //robot.unlock();
-    }
-  }
-      
+      }
     //robot.unlock();
-  //}
+  }
   // Robot disconnected or time elapsed, shut down
   Aria::exit(0);
   return 0;
