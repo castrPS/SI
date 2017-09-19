@@ -10,10 +10,10 @@ using namespace std;
 #define barreira INT_MAX
 #define mapax 1000
 #define mapay 1000
-#define gridsize 510
+#define gridsize 530
 #define PI 3.14159265
 
-int initialize=0;
+int initize=0;
 int finaly, finalx;
 int initx, inity;
 double angle;
@@ -72,44 +72,40 @@ for (int i = 0; i < numSonar; i++){
       pos[gridy][gridx].rep='#';
       pos[gridy][gridx].heur=INT_MAX;
     }
+
+    gridx=(int) floor((sonarRead->getX()/gridsize));
+    gridy=(int) floor((sonarRead->getY()/gridsize));
+    if(gridx>0&&gridy>0){
+      //printf("Mapa %d %d %d\n", i, gridx, gridy);
+      pos[gridy][gridx].rep='#';
+      pos[gridy][gridx].heur=INT_MAX;
+    }
   } 
   }
 }
 
 typedef struct ponto{
-    double heuristica;
-    double *coordenadas;
-
-    ponto(double heuristica, double coordenadas[2]){
-
+    float heuristica;
+    float x;
+    float y;
+ 
+    ponto(double heuristica, float x, float y){
+ 
         this->heuristica = heuristica;
-        this->coordenadas = new double[2];
-        this->coordenadas = coordenadas;
+        this->x = x;
+        this->y = y;
     }
-
+ 
     bool operator < (const ponto &pontoComparador) const{
       return this->heuristica >= pontoComparador.heuristica;
     }
 } ponto;
-
-
-
-static bool equalsArrayBi (double array[2], double array1[2]){
-  bool final = true;
-  for (int i = 0; i < 2; ++i)
-  {
-    if(array[i] != array1[i])
-      final = false;
-  }
-  return final;
+ 
+static bool comparePoints(double x1, double y1, double x2, double y2){
+    return (x1 == x2) && (y1 == y2);
 }
-static double distRet(double array[2], double array1[2]){
-  return ArMath::distanceBetween(array[1],array[0],array1[1],array1[0]);
-}
-
-static void passo(ArRobot *robot, int x,int y, int th){
-  
-  
+static double distRet(double x1, double y1, double x2, double y2){
+  return ArMath::distanceBetween(x1,y1,x2,y2);
 }
 
 
@@ -126,7 +122,7 @@ int main(int argc, char **argv)
   ArLaserConnector laserConnector(&parser, &robot, &robotConnector);
 
 
-  // Connect to the robot, get some initial data from it such as type and name,
+  // Connect to the robot, get some init data from it such as type and name,
   // and then load parameter files for this robot.
   if(!robotConnector.connectRobot())
   {
@@ -176,7 +172,7 @@ int main(int argc, char **argv)
   newMap(finalx, finaly);
 
   // Goto action at lower priority
-  ArActionGoto gotoPoseAction("goto");
+  ArActionGotoStraight gotoPoseAction("goto");
   robot.addAction(&gotoPoseAction, 100);
   
   // Stop action at lower priority, so the robot stops if it has no goal
@@ -209,142 +205,144 @@ int main(int argc, char **argv)
   int gridAtX= (int) ceil(robot.getX()/gridsize);  //grid X atual do robô
   int gridAtY= (int) ceil(robot.getY()/gridsize);  //grid Y atual do robô
 
+  int tempY;
+  int tempX;
   double coordTemp[2];
-  ponto atual = ponto( distRet(coordFinal, coordAtual) , coordAtual);
 
-  stack< priority_queue<ponto> > pilha;
-  priority_queue<ponto>pq;
-  stack< ponto > pilhaPonto;
-  pilhaPonto.push(atual);
+  stack< priority_queue<ponto> > pilhaHeaps;//pilha de Min-Heaps, para armazenar as já visitadas
+  priority_queue<ponto> minHeap;//min-heap de exploração atual
+  stack< ponto > anterior;//pilha de ponto anterior, para saber qual foi o último ponto visitado
+  int contadorDeAdd;
+ 
+  ponto atual = ponto (distRet(initx, inity, finalx, finaly), initx, inity);
+  anterior.push(atual);
 
   while (Aria::getRunning()) {
-    //robot.lock();
     sonarRound(&robot);
-    //if(first||gotoPoseAction.haveAchievedGoal()){
+    if(true/*first||gotoPoseAction.haveAchievedGoal()*/){
       first=false;
-      //if(checagem)
-       // break;
-      double coordAtual[2];//[0] == x e [1] == y inicialmente igual aos valores iniciais
-      coordAtual[0]=robot.getY();
-      coordAtual[1]=robot.getX();
+      contadorDeAdd = 0;//contador para ajudar na hora de uma possivel remocao de itens da heap
+      printf("comparacoes\n");
+      int floorx;
+      int floory;
 
-
-      if(pos[gridAtY][gridAtX+1].rep == ' '){
-        coordTemp[0] = coordAtual[0];//andar para direita
-        coordTemp[1] = coordAtual[1] + gridsize;
-        printf("direita,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      }
-      if(pos[gridAtY - 1][gridAtX-1].rep == ' '){
-        coordTemp[0] = coordAtual[0] - gridsize;//andar para esquerda
-        coordTemp[1] = coordAtual[1] - gridsize;
-        printf("sudoeste,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(pos[gridAtY + 1][gridAtX+1].rep == ' '){
-        coordTemp[0] = coordAtual[0] + gridsize;//andar para direita
-        coordTemp[1] = coordAtual[1] + gridsize;
-        printf("nordeste,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf("as a%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(pos[gridAtY+1][gridAtX - 1].rep == ' '){
-        coordTemp[0] = coordAtual[0] + gridsize;//andar para cima
-        coordTemp[1] = coordAtual[1] - gridsize;
-        printf("noroeste,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(pos[gridAtY-1][gridAtX + 1].rep == ' '){
-        
-        coordTemp[0] = coordAtual[0] - gridsize;//andar para baixo
-        coordTemp[1] = coordAtual[1] + gridsize;
-        printf("sudeste,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      }
-      //Analise dos pontos ao redor
-
-       if(pos[gridAtY][gridAtX-1].rep == ' '){
-        coordTemp[0] = coordAtual[0];//andar para esquerda
-        coordTemp[1] = coordAtual[1] - gridsize;
-        printf("esquerda,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf(" asa%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      }  if(pos[gridAtY+1][gridAtX].rep == ' '){
-        coordTemp[0] = coordAtual[0] + gridsize;//andar para cima
-        coordTemp[1] = coordAtual[1];
-        printf("cima,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf(" sasa%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      } if(pos[gridAtY-1][gridAtX].rep == ' '){
-        
-        coordTemp[0] = coordAtual[0] - gridsize;//andar para baixo
-        coordTemp[1] = coordAtual[1];
-        printf("baixo,%f,%f\n",coordTemp[1], coordTemp[0]);
-        //printf("a sas%f %f   \n\n", coordTemp[1], coordTemp[0]);
-        pq.push(ponto( distRet(coordTemp, coordFinal) , coordTemp));
-      }
-/*
-       
-*/
-      ponto topo = pq.top();
-      printf(" primeiro topo %f %f\n",topo.coordenadas[1],topo.coordenadas[0]); 
-      printf("topo heur: %f \n", topo.heuristica);
-      printf("Pilha top heur: %f\n", pilhaPonto.top().heuristica);
-      if(topo.heuristica > atual.heuristica){//ponto pior
-        printf("Piorou\n");
-        pos[gridAtY][gridAtX].rep = '*';//ponto atual nao é um ponto bom
-      for(int i = 0; i < 8; i++){
-        if(!equalsArrayBi(pilhaPonto.top().coordenadas, topo.coordenadas)){
-          printf("%d if\n", i);
-          printf("IF topo heur: %f \n", topo.heuristica);
-          printf("IF Pilha top heur: %f\n", pilhaPonto.top().heuristica);
-          int aux1=(int) ceil(topo.coordenadas[0]/gridsize);
-          int aux2=(int) ceil(topo.coordenadas[1]/gridsize);
-          if(aux1>=0&&aux2>=0){
-            pos[aux1][aux2].rep = '*';
-            printf("ok\n");
-          }
+        tempX = atual.x;
+        tempY = atual.y+gridsize;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){// cima
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
         }
-        if(!pq.empty()){
-          pq.pop();
-          topo = pq.top();
+
+        tempX = atual.x+gridsize;
+        tempY = atual.y;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){// direita
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
+        } 
+
+        tempX = atual.x+gridsize;
+        tempY = atual.y+gridsize;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Nordeste
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
         }
-      }
-      if(!pq.empty()){
-        pq = pilha.top();
-      }
-      atual = pilhaPonto.top();
-      printf(" if %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
 
-      gridAtY=(int) ceil(robot.getY()/gridsize);
-      gridAtX=(int) ceil(robot.getX()/gridsize);
-      if(!pilhaPonto.empty()){
-        pilhaPonto.pop();
-      }
-      if(!pilha.empty()){
-        pilha.pop();
-      }
-    } else{
-      pilhaPonto.push(atual);//o ponto anterior será o que era atual
-      atual = topo;//o atual sera o melhor
-      printf(" else %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
-      if(!pq.empty()){
-        pq.pop();
-      }
-      pilha.push(pq);//e essa pq vai para pilha
-      pq = priority_queue<ponto>();
-    }
+        tempX = atual.x;
+        tempY = atual.y-gridsize;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//baixo
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
+        }
 
-      coordAtual[0] = atual.coordenadas[0];
-      coordAtual[1] = atual.coordenadas[1];
-      int gridAtX= (int) ceil(robot.getX()/gridsize);  //grid X atual do robô
-      int gridAtY= (int) ceil(robot.getY()/gridsize);  //grid Y atual do robô
-      printf(" escolhido %f %f\n",atual.coordenadas[1],atual.coordenadas[0]);
-      ArPose fut= ArPose(atual.coordenadas[1],atual.coordenadas[0]);
-      gotoPoseAction.setGoal(fut);
-      //checagem = true;
+        tempX = atual.x-gridsize;
+        tempY = atual.y;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Esquerda
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
+        }
+
+        tempX = atual.x-gridsize;
+        tempY = atual.y+gridsize;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Noroeste
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
+        }
+
+        tempX = atual.x-gridsize;
+        tempY = atual.y-gridsize;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Sudoeste
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
+        }
+
+        tempX = atual.x+gridsize;
+        tempY = atual.y-gridsize;
+        floorx=floor(tempX/gridsize);
+        floory=floor(tempY/gridsize);
+        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Sudeste
+            
+            printf("okay\n");
+            minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
+            contadorDeAdd++;
+        }
+
+
+        printf("fim das comparacoes\n");
+        //Pontos explorados
+        printf("comeco das comparacoes do pontos explorados\n");
+        if(minHeap.top().heuristica > atual.heuristica){//nenhum ponto explorado foi melhor
+            //Marcar todos os pontos, menos o anterior
+            pos[(int) floor(atual.y/gridsize)][(int) floor(atual.x/gridsize)].rep = '*';//o ponto atual não será mais visitado, pois ele não levou a algum lugar decente
+            for(int cont = 0; cont < contadorDeAdd; cont++){//so percorre a heap o mesmo numero de vezes que algo foi adicionado a ela
+                if(comparePoints(minHeap.top().x, minHeap.top().y, anterior.top().x, anterior.top().y)){//evitar marcar o ponto anterior, pois ele será o atual na próxima iteração
+                    pos[(int) floor(minHeap.top().y/gridsize)][(int) floor(minHeap.top().x/gridsize)].rep = '*';
+                }
+                minHeap.pop();//tira essse ponto para marcar o próximo
+            }
+            //com todos os pontos marcados, o ponto atual passa a ser o anterior
+            atual = anterior.top();
+            anterior.pop();//o anterior agora é o antes do anterior antes
+            minHeap = pilhaHeaps.top();
+            pilhaHeaps.pop();
+        } else {//caso dê no mesmo ou melhorou
+            anterior.push(atual);//o ponto anterior é o atual
+            atual = minHeap.top();//o ponto atual é o melhor
+            pilhaHeaps.push(minHeap);//coloca a atual heap na pilha
+            minHeap = priority_queue<ponto>();//esvaziar a atual Minheap
+        }
+        printf("fim das comparacoes do pontos explorados\n");
+        gotoPoseAction.setGoal(ArPose(atual.x,atual.y));
     }
+  }
+      
     //robot.unlock();
   //}
   // Robot disconnected or time elapsed, shut down
