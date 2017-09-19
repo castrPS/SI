@@ -48,7 +48,7 @@ void newMap(int fx, int fy){
 
   }
   //printf("terminou \n");
-  pos[(int) ceil(fy/gridsize)][(int) ceil(fx/gridsize)].heur = 0;
+  pos[(int) floor(fy/gridsize)][(int) floor(fx/gridsize)].heur = 0;
   //printf("terminou \n");
 }
 
@@ -65,21 +65,21 @@ for (int i = 0; i < numSonar; i++){
   sonarRead = thisRobot->getSonarReading(i);
   //printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
   if(sonarRead->getRange()<5000){
-    int gridx=(int) ceil((sonarRead->getX()/gridsize));
-    int gridy=(int) ceil((sonarRead->getY()/gridsize));
+    int gridx=(int) floor((sonarRead->getX()/gridsize));
+    int gridy=(int) floor((sonarRead->getY()/gridsize));
     if(gridx>0&&gridy>0){
       //printf("Mapa %d %d %d\n", i, gridx, gridy);
       pos[gridy][gridx].rep='#';
       pos[gridy][gridx].heur=INT_MAX;
     }
 
-    gridx=(int) floor((sonarRead->getX()/gridsize));
+    /*gridx=(int) floor((sonarRead->getX()/gridsize));
     gridy=(int) floor((sonarRead->getY()/gridsize));
     if(gridx>0&&gridy>0){
       //printf("Mapa %d %d %d\n", i, gridx, gridy);
       pos[gridy][gridx].rep='#';
       pos[gridy][gridx].heur=INT_MAX;
-    }
+    }*/
   } 
   }
 }
@@ -205,8 +205,8 @@ int main(int argc, char **argv)
   int gridAtX= (int) ceil(robot.getX()/gridsize);  //grid X atual do robô
   int gridAtY= (int) ceil(robot.getY()/gridsize);  //grid Y atual do robô
 
-  int tempY;
-  int tempX;
+  double tempY;
+  double tempX;
   double coordTemp[2];
 
   stack< priority_queue<ponto> > pilhaHeaps;//pilha de Min-Heaps, para armazenar as já visitadas
@@ -218,98 +218,99 @@ int main(int argc, char **argv)
   anterior.push(atual);
 
   while (Aria::getRunning()) {
+    //robot.lock();
     sonarRound(&robot);
     if(true/*first||gotoPoseAction.haveAchievedGoal()*/){
       first=false;
       contadorDeAdd = 0;//contador para ajudar na hora de uma possivel remocao de itens da heap
       printf("comparacoes\n");
-      int floorx;
-      int floory;
+      int ceilx;
+      int ceily;
 
         tempX = atual.x;
         tempY = atual.y+gridsize;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){// cima
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){// cima
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
 
         tempX = atual.x+gridsize;
         tempY = atual.y;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){// direita
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){// direita
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         } 
 
         tempX = atual.x+gridsize;
         tempY = atual.y+gridsize;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Nordeste
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){//Nordeste
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
 
         tempX = atual.x;
         tempY = atual.y-gridsize;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//baixo
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){//baixo
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
 
         tempX = atual.x-gridsize;
         tempY = atual.y;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Esquerda
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){//Esquerda
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
 
         tempX = atual.x-gridsize;
         tempY = atual.y+gridsize;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Noroeste
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){//Noroeste
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
 
         tempX = atual.x-gridsize;
         tempY = atual.y-gridsize;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Sudoeste
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){//Sudoeste
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
 
         tempX = atual.x+gridsize;
         tempY = atual.y-gridsize;
-        floorx=floor(tempX/gridsize);
-        floory=floor(tempY/gridsize);
-        if(floorx>=0&&floory>=0&&pos[floory][floorx].rep == ' '){//Sudeste
+        ceilx=ceil(tempX/gridsize);
+        ceily=ceil(tempY/gridsize);
+        if(ceilx>=0&&ceily>=0&&pos[ceily][ceilx].rep == ' '){//Sudeste
             
-            printf("okay\n");
+            printf("okay %f %f\n",tempX,tempY);
             minHeap.push(ponto(distRet(tempX, tempY, atual.x, atual.y), tempX, tempY));
             contadorDeAdd++;
         }
@@ -320,10 +321,10 @@ int main(int argc, char **argv)
         printf("comeco das comparacoes do pontos explorados\n");
         if(minHeap.top().heuristica > atual.heuristica){//nenhum ponto explorado foi melhor
             //Marcar todos os pontos, menos o anterior
-            pos[(int) floor(atual.y/gridsize)][(int) floor(atual.x/gridsize)].rep = '*';//o ponto atual não será mais visitado, pois ele não levou a algum lugar decente
+            pos[(int) ceil(atual.y/gridsize)][(int) ceil(atual.x/gridsize)].rep = '*';//o ponto atual não será mais visitado, pois ele não levou a algum lugar decente
             for(int cont = 0; cont < contadorDeAdd; cont++){//so percorre a heap o mesmo numero de vezes que algo foi adicionado a ela
                 if(comparePoints(minHeap.top().x, minHeap.top().y, anterior.top().x, anterior.top().y)){//evitar marcar o ponto anterior, pois ele será o atual na próxima iteração
-                    pos[(int) floor(minHeap.top().y/gridsize)][(int) floor(minHeap.top().x/gridsize)].rep = '*';
+                    pos[(int) ceil(minHeap.top().y/gridsize)][(int) ceil(minHeap.top().x/gridsize)].rep = '*';
                 }
                 minHeap.pop();//tira essse ponto para marcar o próximo
             }
@@ -340,6 +341,7 @@ int main(int argc, char **argv)
         }
         printf("fim das comparacoes do pontos explorados\n");
         gotoPoseAction.setGoal(ArPose(atual.x,atual.y));
+        //robot.unlock();
     }
   }
       
