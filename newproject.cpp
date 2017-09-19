@@ -174,14 +174,21 @@ int main(int argc, char **argv)
   robot.addAction(&limiterFarAction, 90);
 
 
-  //scanf("%d %d %lf", &initx, &inity, &angle); //posição inicial do robô
-  //scanf("%d %d", &finalx, &finaly); //posição final
-  initx=1000;
+    FILE *arq;
+  arq = fopen("saida.txt","wt");
+  FILE * pFile;
+  pFile = fopen ("entrada.txt","rt");
+
+  fscanf(pFile,"%d %d %lf\n%d %d", &initx, &inity, &angle,&finalx, &finaly); //posição inicial do robô
+  printf("%d %d %lf\n%d %d", initx, inity, angle,finalx, finaly); //
+  
+
+  /*initx=1000;
   inity=1500;
   angle=0;
   finalx=13000;
   finaly=1300;
-  newMap(finalx, finaly);
+  newMap(finalx, finaly);*/
 
   // Goto action at lower priority
   ArActionGoto gotoPoseAction("goto");
