@@ -18,6 +18,26 @@ int finaly, finalx;
 int initx, inity;
 double angle;
 
+typedef struct ponto{
+    double heuristica;
+    double x;
+    double y;
+
+    ponto(double heuristica, double y, double x){
+
+        this->heuristica = heuristica;
+        this->x = x;
+        this->y=y;
+    }
+
+    bool operator < (const ponto &pontoComparador) const{
+      return this->heuristica >= pontoComparador.heuristica;
+    }
+
+    bool operator > (const ponto &pontoComparador) const{
+      return this->heuristica < pontoComparador.heuristica;
+    }
+} ponto;
 
 typedef struct grid{
     char rep; //representação em char do mapa
@@ -53,17 +73,22 @@ void newMap(int fx, int fy){
 }
 
 //maeando atráves do sonar
-void sonarRound(ArRobot *thisRobot){
+ponto sonarRound(ArRobot *thisRobot){
 double x= thisRobot->getX();
 double y= thisRobot->getY();
 double th=thisRobot->getTh();
 int numSonar=thisRobot->getNumSonar(); //Get number of sonar
 ArSensorReading* sonarRead;
+ponto p= ponto (0,0,0);
+int alcance=0;
 //printf("pegou leituras do sonar\n");
 //To hold each reading
 for (int i = 0; i < numSonar; i++){
   sonarRead = thisRobot->getSonarReading(i);
   //printf("Sonar %d %f %f\n", i, sonarRead->getX(), sonarRead->getY());
+  if(sonarRead->getRange()>alcance){
+    p= ponto(0,sonarRead->getX(), sonarRead->getY());
+  }
   if(sonarRead->getRange()<5000){
     int gridx=(int) floor((sonarRead->getX()/gridsize));
 
@@ -82,28 +107,9 @@ for (int i = 0; i < numSonar; i++){
     }
   } 
   }
+  return p;
 }
 
-typedef struct ponto{
-    double heuristica;
-    double x;
-    double y;
-
-    ponto(double heuristica, double y, double x){
-
-        this->heuristica = heuristica;
-        this->x = x;
-        this->y=y;
-    }
-
-    bool operator < (const ponto &pontoComparador) const{
-      return this->heuristica >= pontoComparador.heuristica;
-    }
-
-    bool operator > (const ponto &pontoComparador) const{
-      return this->heuristica < pontoComparador.heuristica;
-    }
-} ponto;
 
 
 
@@ -234,7 +240,7 @@ int main(int argc, char **argv)
 
   while (Aria::getRunning()) {
     robot.lock();
-    sonarRound(&robot);
+    ponto fuga = sonarRound(&robot);
     if(first||gotoPoseAction.haveAchievedGoal()){
       first=false;
       //if(checagem)
@@ -353,7 +359,11 @@ int main(int argc, char **argv)
       int gridAtY= (int) floor(robot.getY()/gridsize);  //grid Y atual do robô
       printf(" escolhido %f %f\n",atual.x,atual.y);
       ArPose fut= ArPose(atual.x,atual.y);
-      gotoPoseAction.setGoal(fut);
+      if(robot.getSonarReading(3)->getRange()>510&&robot.getSonarReading(4)->getRange()>510){
+        gotoPoseAction.setGoal(fut);
+      }
+      else
+        gotoPoseAction.setGoal(ArPose(fuga.x,fuga.y));
       //checagem = true;
       robot.unlock();
   }else{
